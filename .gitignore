@@ -1,0 +1,33 @@
+## Course material - kept local, not published
+lessons/
+solutions/
+
+## Build output
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+artifacts/
+
+## IDE
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.DotSettings.user
+
+## Test / tooling output
+[Tt]est[Rr]esult*/
+coverage*.json
+coverage*.xml
+*.trx
+*.coverage
+
+## Local environment
+*.env
+.env.local
+appsettings.Local.json
+
+## OS
+.DS_Store
+Thumbs.db
