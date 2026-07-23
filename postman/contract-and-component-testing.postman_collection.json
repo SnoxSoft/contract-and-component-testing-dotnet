@@ -1,0 +1,406 @@
+{
+  "info": {
+    "name": "Contract & Component Testing (.NET)",
+    "description": "Manual exploration of the four-service system.\n\nStart the infrastructure with `docker compose up -d`, then run OrderService (5000), InventoryService (5001) and PaymentService (5002).\n\nThe happy-path order request stores the returned id in the `orderId` collection variable, so \"Get order by id\" works straight after it. The payment requests do the same with `paymentId`.\n\nEvery request asserts its expected status code, so the whole collection can be run with the Collection Runner.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "orderServiceUrl", "value": "http://localhost:5000" },
+    { "key": "inventoryServiceUrl", "value": "http://localhost:5001" },
+    { "key": "paymentServiceUrl", "value": "http://localhost:5002" },
+    { "key": "orderId", "value": "00000000-0000-0000-0000-000000000000" },
+    { "key": "paymentId", "value": "00000000-0000-0000-0000-000000000000" }
+  ],
+  "item": [
+    {
+      "name": "Inventory",
+      "description": "The provider OrderService reads stock and prices from.",
+      "item": [
+        {
+          "name": "Get stock for a known SKU",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{inventoryServiceUrl}}/stock/SKU-COFFEE",
+              "host": ["{{inventoryServiceUrl}}"],
+              "path": ["stock", "SKU-COFFEE"]
+            },
+            "description": "The shape of this response is exactly what the consumer contract in lesson 06 will describe."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('has the fields the consumer depends on', () => {",
+                  "    pm.expect(body).to.have.property('sku');",
+                  "    pm.expect(body).to.have.property('availableQuantity');",
+                  "    pm.expect(body).to.have.property('unitPriceCents');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get stock for an unknown SKU",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{inventoryServiceUrl}}/stock/SKU-NOPE",
+              "host": ["{{inventoryServiceUrl}}"],
+              "path": ["stock", "SKU-NOPE"]
+            },
+            "description": "InventoryClient maps this 404 to null rather than throwing, so the consumer genuinely depends on it. That is why it belongs in the contract."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get stock for the low-stock SKU",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{inventoryServiceUrl}}/stock/SKU-GRINDER",
+              "host": ["{{inventoryServiceUrl}}"],
+              "path": ["stock", "SKU-GRINDER"]
+            },
+            "description": "Seeded with only 3 available, which is what makes the 409 order scenario deterministic."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has 3 in stock', () => pm.expect(pm.response.json().availableQuantity).to.eql(3));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "description": "The second provider. Declines anything above 50000 cents.",
+      "item": [
+        {
+          "name": "Authorise a payment",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"11111111-1111-1111-1111-111111111111\",\n  \"amountCents\": 3048,\n  \"currency\": \"EUR\"\n}"
+            },
+            "url": {
+              "raw": "{{paymentServiceUrl}}/payments",
+              "host": ["{{paymentServiceUrl}}"],
+              "path": ["payments"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('is authorized', () => pm.expect(body.status).to.eql('Authorized'));",
+                  "pm.collectionVariables.set('paymentId', body.paymentId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Payment declined above the credit limit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"22222222-2222-2222-2222-222222222222\",\n  \"amountCents\": 89900,\n  \"currency\": \"EUR\"\n}"
+            },
+            "url": {
+              "raw": "{{paymentServiceUrl}}/payments",
+              "host": ["{{paymentServiceUrl}}"],
+              "path": ["payments"]
+            },
+            "description": "A decline is a business outcome, not a transport failure. It returns 422 with a full body, and PaymentClient reads that body rather than treating it as an error."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 422', () => pm.response.to.have.status(422));",
+                  "pm.test('is declined', () => pm.expect(pm.response.json().status).to.eql('Declined'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject a non-positive amount",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"33333333-3333-3333-3333-333333333333\",\n  \"amountCents\": 0,\n  \"currency\": \"EUR\"\n}"
+            },
+            "url": {
+              "raw": "{{paymentServiceUrl}}/payments",
+              "host": ["{{paymentServiceUrl}}"],
+              "path": ["payments"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get payment by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{paymentServiceUrl}}/payments/{{paymentId}}",
+              "host": ["{{paymentServiceUrl}}"],
+              "path": ["payments", "{{paymentId}}"]
+            },
+            "description": "Uses the id captured by 'Authorise a payment'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 200', () => pm.response.to.have.status(200));"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Orders",
+      "description": "The consumer. Every request here fans out to Inventory and Payment.",
+      "item": [
+        {
+          "name": "Place an order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"cust-1\",\n  \"items\": [\n    { \"sku\": \"SKU-COFFEE\", \"quantity\": 2 },\n    { \"sku\": \"SKU-MUG\", \"quantity\": 1 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{orderServiceUrl}}/orders",
+              "host": ["{{orderServiceUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Calls Inventory once per line, then Payment once, then publishes OrderPlaced. Watch the NotificationService console after running this."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 201', () => pm.response.to.have.status(201));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('is placed', () => pm.expect(body.status).to.eql('Placed'));",
+                  "pm.test('total is 2 x 899 + 1250', () => pm.expect(body.totalCents).to.eql(3048));",
+                  "",
+                  "pm.collectionVariables.set('orderId', body.orderId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get order by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orderServiceUrl}}/orders/{{orderId}}",
+              "host": ["{{orderServiceUrl}}"],
+              "path": ["orders", "{{orderId}}"]
+            },
+            "description": "Uses the id captured by 'Place an order'."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 200', () => pm.response.to.have.status(200));",
+                  "pm.test('has two lines', () => pm.expect(pm.response.json().lines).to.have.lengthOf(2));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown SKU",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"cust-1\",\n  \"items\": [\n    { \"sku\": \"SKU-NOPE\", \"quantity\": 1 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{orderServiceUrl}}/orders",
+              "host": ["{{orderServiceUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Inventory answers 404, InventoryClient turns that into null, and the placement service turns null into a 400."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Insufficient stock",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"cust-1\",\n  \"items\": [\n    { \"sku\": \"SKU-GRINDER\", \"quantity\": 10 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{orderServiceUrl}}/orders",
+              "host": ["{{orderServiceUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Only 3 grinders are seeded. Payment is never called on this path."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('returns 409', () => pm.response.to.have.status(409));",
+                  "pm.test('explains the shortfall', () => pm.expect(pm.response.json().detail).to.include('3 available'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Payment declined",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"cust-1\",\n  \"items\": [\n    { \"sku\": \"SKU-COFFEE\", \"quantity\": 100 }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{orderServiceUrl}}/orders",
+              "host": ["{{orderServiceUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "100 x 899 = 89900, over the 50000 limit. The order is still persisted, with status PaymentDeclined, but no OrderPlaced event is published."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 402', () => pm.response.to.have.status(402));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Empty order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"cust-1\",\n  \"items\": []\n}"
+            },
+            "url": {
+              "raw": "{{orderServiceUrl}}/orders",
+              "host": ["{{orderServiceUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Rejected before any collaborator is called."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 400', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{orderServiceUrl}}/orders/99999999-9999-9999-9999-999999999999",
+              "host": ["{{orderServiceUrl}}"],
+              "path": ["orders", "99999999-9999-9999-9999-999999999999"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('returns 404', () => pm.response.to.have.status(404));"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
