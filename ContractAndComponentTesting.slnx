@@ -6,4 +6,7 @@
     <Project Path="src/OrderService/OrderService.csproj" />
     <Project Path="src/PaymentService/PaymentService.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InventoryService.ComponentTests/InventoryService.ComponentTests.csproj" />
+  </Folder>
 </Solution>

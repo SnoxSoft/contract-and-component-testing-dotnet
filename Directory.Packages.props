@@ -5,10 +5,12 @@
   </PropertyGroup>
 
   <ItemGroup Label="Runtime">
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.10" />
+    <!-- The EF Core packages are kept on one version, the one Npgsql 10.0.3 resolves to. -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.8.0" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.4" />
     <!-- MassTransit 9 is commercially licensed; 8.x remains Apache 2.0. -->
     <PackageVersion Include="MassTransit" Version="8.5.10" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.5.10" />

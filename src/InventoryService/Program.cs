@@ -9,7 +9,11 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
-await app.Services.MigrateAndSeedAsync();
+// Component tests supply their own store and their own data.
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    await app.Services.MigrateAndSeedAsync();
+}
 
 app.MapStockEndpoints();
 
