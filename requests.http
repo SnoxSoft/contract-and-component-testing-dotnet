@@ -1,0 +1,53 @@
+### Stock for a known SKU
+GET http://localhost:5001/stock/SKU-COFFEE
+
+### Stock for an unknown SKU -> 404
+GET http://localhost:5001/stock/SKU-NOPE
+
+### Place an order -> 201
+POST http://localhost:5000/orders
+Content-Type: application/json
+
+{
+  "customerId": "cust-1",
+  "items": [
+    { "sku": "SKU-COFFEE", "quantity": 2 },
+    { "sku": "SKU-MUG", "quantity": 1 }
+  ]
+}
+
+### Unknown SKU -> 400
+POST http://localhost:5000/orders
+Content-Type: application/json
+
+{
+  "customerId": "cust-1",
+  "items": [
+    { "sku": "SKU-NOPE", "quantity": 1 }
+  ]
+}
+
+### Insufficient stock, only 3 grinders are seeded -> 409
+POST http://localhost:5000/orders
+Content-Type: application/json
+
+{
+  "customerId": "cust-1",
+  "items": [
+    { "sku": "SKU-GRINDER", "quantity": 10 }
+  ]
+}
+
+### Above the 50000 cent credit limit -> 402
+POST http://localhost:5000/orders
+Content-Type: application/json
+
+{
+  "customerId": "cust-1",
+  "items": [
+    { "sku": "SKU-COFFEE", "quantity": 100 }
+  ]
+}
+
+### Read an order back, paste an id from a 201 response above
+GET http://localhost:5000/orders/00000000-0000-0000-0000-000000000000

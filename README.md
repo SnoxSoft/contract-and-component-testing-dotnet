@@ -73,10 +73,20 @@ dotnet run --project src/NotificationService
 
 Databases are created and migrated on startup, and the inventory is seeded with `SKU-COFFEE`, `SKU-MUG` and `SKU-GRINDER`.
 
-Place an order:
+### Sending requests
+
+[`requests.http`](requests.http) covers every scenario and runs directly in Rider, Visual Studio and VS Code. That is the easiest way in.
+
+From a shell, on macOS or Linux:
 
 ```bash
-curl -X POST http://localhost:5000/orders -H "Content-Type: application/json" -d "{\"customerId\":\"cust-1\",\"items\":[{\"sku\":\"SKU-COFFEE\",\"quantity\":2}]}"
+curl -X POST http://localhost:5000/orders -H "Content-Type: application/json" -d '{"customerId":"cust-1","items":[{"sku":"SKU-COFFEE","quantity":2}]}'
+```
+
+On Windows PowerShell, two things bite. `curl` is an alias for `Invoke-WebRequest`, so call `curl.exe` explicitly; and PowerShell rewrites quoting on its way to native programs, so prefix the arguments with `--%` to pass them through untouched:
+
+```bash
+curl.exe --% -X POST http://localhost:5000/orders -H "Content-Type: application/json" -d "{\"customerId\":\"cust-1\",\"items\":[{\"sku\":\"SKU-COFFEE\",\"quantity\":2}]}"
 ```
 
 ## Stack
