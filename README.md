@@ -77,6 +77,8 @@ Databases are created and migrated on startup, and the inventory is seeded with 
 
 [`requests.http`](requests.http) covers every scenario and runs directly in Rider, Visual Studio and VS Code. That is the easiest way in.
 
+For Postman, import [`postman/contract-and-component-testing.postman_collection.json`](postman/contract-and-component-testing.postman_collection.json). Service URLs are collection variables, the placed order's id is captured automatically for the follow-up read, and every request asserts its expected status code, so the collection also runs end to end in the Collection Runner.
+
 From a shell, on macOS or Linux:
 
 ```bash
