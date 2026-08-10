@@ -4,8 +4,15 @@ using Shouldly;
 
 namespace InventoryService.ComponentTests;
 
-public class StockEndpointTests(InventoryApiFactory factory) : IClassFixture<InventoryApiFactory>
+[Collection(nameof(InventoryCollection))]
+public class StockEndpointTests(InventoryApiFactory factory) : IAsyncLifetime
 {
+    // The container is shared by every test in the collection, so each test starts
+    // from an empty database rather than inheriting the previous test's rows.
+    public ValueTask InitializeAsync() => factory.ResetAsync();
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
     [Fact]
     public async Task Returns_the_stock_item_for_a_known_sku()
     {
