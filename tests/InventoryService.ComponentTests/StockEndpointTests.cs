@@ -11,12 +11,10 @@ public class StockEndpointTests(InventoryApiFactory factory) : IClassFixture<Inv
     {
         var ct = TestContext.Current.CancellationToken;
 
-        await factory.SeedAsync(new StockItem
-        {
-            Sku = "SKU-TEST-TEA",
-            AvailableQuantity = 7,
-            UnitPriceCents = 450
-        });
+        await factory.SeedAsync(
+            new StockItem { Sku = "SKU-TEST-COFFEE", AvailableQuantity = 12, UnitPriceCents = 999 },
+            new StockItem { Sku = "SKU-TEST-TEA",    AvailableQuantity = 7,  UnitPriceCents = 450 },
+            new StockItem { Sku = "SKU-TEST-MUG",    AvailableQuantity = 3,  UnitPriceCents = 1250 });
 
         var client = factory.CreateClient();
 
@@ -30,5 +28,19 @@ public class StockEndpointTests(InventoryApiFactory factory) : IClassFixture<Inv
         stock.Sku.ShouldBe("SKU-TEST-TEA");
         stock.AvailableQuantity.ShouldBe(7);
         stock.UnitPriceCents.ShouldBe(450);
+    }
+
+    [Fact]
+    public async Task Returns_404_for_an_unknown_sku()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/stock/SKU-DOES-NOT-EXIST", ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        var problem = await response.Content.ReadAsStringAsync(ct);
+        problem.ShouldContain("Unknown SKU");
     }
 }
