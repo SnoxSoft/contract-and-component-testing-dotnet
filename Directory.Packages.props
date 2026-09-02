@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
 
   <ItemGroup Label="Runtime">
     <!-- The EF Core packages are kept on one version, the one Npgsql 10.0.3 resolves to. -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4" />
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.8.0" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <!-- MassTransit 9 is commercially licensed; 8.x remains Apache 2.0. -->
@@ -26,6 +27,11 @@
     <PackageVersion Include="Respawn" Version="7.0.0" />
     <PackageVersion Include="WireMock.Net" Version="2.13.0" />
     <PackageVersion Include="PactNet" Version="5.0.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="Transitive pins">
+    <!-- Testcontainers pulls SSH.NET 2025.1.0, which carries GHSA-q939-rpr3-3284. -->
+    <PackageVersion Include="SSH.NET" Version="2026.0.0" />
   </ItemGroup>
 
 </Project>
