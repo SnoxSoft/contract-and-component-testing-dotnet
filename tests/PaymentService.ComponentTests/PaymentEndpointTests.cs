@@ -12,7 +12,7 @@ public class PaymentEndpointTests(PaymentApiFactory factory) : IAsyncLifetime
     public ValueTask InitializeAsync() => factory.ResetAsync();
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
-    
+
     [Fact]
     public async Task Authorises_a_payment_within_the_credit_limit()
     {

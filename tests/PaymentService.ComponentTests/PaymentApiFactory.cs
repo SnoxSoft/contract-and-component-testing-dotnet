@@ -10,7 +10,7 @@ using Testcontainers.PostgreSql;
 
 namespace PaymentService.ComponentTests;
 
-public class PaymentApiFactory: WebApplicationFactory<Program>, IAsyncLifetime
+public class PaymentApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     // Same image as docker-compose, so tests and local runs agree on the engine version.
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
@@ -40,7 +40,7 @@ public class PaymentApiFactory: WebApplicationFactory<Program>, IAsyncLifetime
             TablesToIgnore = [new Respawn.Graph.Table("__EFMigrationsHistory")]
         });
     }
-    
+
     /// <summary>Deletes all rows while leaving the schema and migration history intact.</summary>
     public async ValueTask ResetAsync() => await _respawner.ResetAsync(_connection);
 
@@ -51,7 +51,7 @@ public class PaymentApiFactory: WebApplicationFactory<Program>, IAsyncLifetime
         builder.ConfigureServices(services =>
         {
             // AddDbContext registers the connection-string delegate as IDbContextOptionsConfiguration.
-            // Leaving it in place would point the context at the developer's local PostgresSQL.
+            // Leaving it in place would point the context at the developer's local PostgreSQL.
             services.RemoveAll<IDbContextOptionsConfiguration<PaymentDbContext>>();
             services.RemoveAll<DbContextOptions<PaymentDbContext>>();
             services.RemoveAll<PaymentDbContext>();
