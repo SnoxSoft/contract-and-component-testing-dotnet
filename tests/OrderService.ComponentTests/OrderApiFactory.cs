@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Http.Resilience;
+using Polly;
 using Npgsql;
 using Respawn;
 using Testcontainers.PostgreSql;
@@ -63,6 +65,22 @@ public class OrderApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 
         builder.ConfigureServices(services =>
         {
+            // Production waits seconds between retries. Tests assert on how many
+            // attempts happen and what comes back, never on how long it took, so
+            // the delays are collapsed and the timeouts pulled in.
+            foreach (var client in new[] { "InventoryClient", "PaymentClient" })
+            {
+                services.Configure<HttpStandardResilienceOptions>($"{client}-standard", options =>
+                {
+                    options.Retry.Delay = TimeSpan.FromMilliseconds(1);
+                    options.Retry.BackoffType = DelayBackoffType.Constant;
+                    options.Retry.UseJitter = false;
+                    options.AttemptTimeout.Timeout = TimeSpan.FromSeconds(1);
+                    options.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(10);
+                    options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(2);
+                });
+            }
+
             // The broker is the one collaborator with no configurable in-process form,
             // so MassTransit's registrations are replaced with its in-memory harness.
             var massTransit = services
