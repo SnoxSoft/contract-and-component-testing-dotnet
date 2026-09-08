@@ -1,0 +1,95 @@
+{
+  "consumer": {
+    "name": "OrderService"
+  },
+  "interactions": [
+    {
+      "description": "a request for the stock level of a known SKU",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "stock exists for SKU-COFFEE"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/stock/SKU-COFFEE"
+      },
+      "response": {
+        "body": {
+          "content": {
+            "availableQuantity": 120,
+            "sku": "SKU-COFFEE",
+            "unitPriceCents": 899
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "headers": {
+          "Content-Type": [
+            "application/json; charset=utf-8"
+          ]
+        },
+        "matchingRules": {
+          "body": {
+            "$.availableQuantity": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.sku": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            },
+            "$.unitPriceCents": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      },
+      "type": "Synchronous/HTTP"
+    },
+    {
+      "description": "a request for the stock level of an unknown SKU",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "no stock exists for SKU-NOPE"
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "path": "/stock/SKU-NOPE"
+      },
+      "response": {
+        "status": 404
+      },
+      "type": "Synchronous/HTTP"
+    }
+  ],
+  "metadata": {
+    "pactRust": {
+      "ffi": "0.4.27",
+      "models": "1.2.8"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "InventoryService"
+  }
+}
