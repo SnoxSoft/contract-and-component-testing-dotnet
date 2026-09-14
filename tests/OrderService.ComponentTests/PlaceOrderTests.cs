@@ -36,8 +36,12 @@ public class PlaceOrderTests(OrderApiFactory factory) : IAsyncLifetime
         order.TotalCents.ShouldBe(1_798);
         order.Lines.Single().UnitPriceCents.ShouldBe(899);
 
+        // Scoped to this order rather than "any OrderPlaced", so the assertion cannot be
+        // satisfied by a message an earlier test in the collection published.
         var harness = factory.Services.GetRequiredService<ITestHarness>();
-        (await harness.Published.Any<OrderPlaced>(ct)).ShouldBeTrue();
+        harness.Published.Select<OrderPlaced>(ct)
+            .Any(m => m.Context.Message.OrderId == order.OrderId)
+            .ShouldBeTrue();
     }
 
     [Fact]

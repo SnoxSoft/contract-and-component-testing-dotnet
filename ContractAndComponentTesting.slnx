@@ -8,6 +8,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/InventoryService.ComponentTests/InventoryService.ComponentTests.csproj" />
+    <Project Path="tests/InventoryService.ContractTests/InventoryService.ContractTests.csproj" />
     <Project Path="tests/OrderService.ComponentTests/OrderService.ComponentTests.csproj" />
     <Project Path="tests/OrderService.ContractTests/OrderService.ContractTests.csproj" />
     <Project Path="tests/PaymentService.ComponentTests/PaymentService.ComponentTests.csproj" />

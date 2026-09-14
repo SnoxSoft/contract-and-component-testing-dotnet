@@ -20,6 +20,7 @@ public class PlaceOrderFailureTests(OrderApiFactory factory) : IAsyncLifetime
     public async Task Reports_payment_required_when_the_payment_is_declined()
     {
         var ct = TestContext.Current.CancellationToken;
+        var customerId = $"cust-{Guid.NewGuid():N}";
 
         factory.StubStock("SKU-COFFEE", availableQuantity: 500, unitPriceCents: 899);
         factory.Payments
@@ -39,12 +40,16 @@ public class PlaceOrderFailureTests(OrderApiFactory factory) : IAsyncLifetime
         var client = factory.CreateClient();
 
         var response = await client.PostAsJsonAsync(
-            "/orders", new PlaceOrderRequest("cust-1", [new PlaceOrderItem("SKU-COFFEE", 100)]), ct);
+            "/orders", new PlaceOrderRequest(customerId, [new PlaceOrderItem("SKU-COFFEE", 100)]), ct);
 
         response.StatusCode.ShouldBe(HttpStatusCode.PaymentRequired);
 
+        // The harness keeps every message published since the host started, and a reset
+        // does not clear it, so the assertion is scoped to this test's own customer.
         var harness = factory.Services.GetRequiredService<ITestHarness>();
-        (await harness.Published.Any<OrderPlaced>(ct)).ShouldBeFalse();
+        harness.Published.Select<OrderPlaced>(ct)
+            .Any(m => m.Context.Message.CustomerId == customerId)
+            .ShouldBeFalse();
     }
 
     [Fact]
