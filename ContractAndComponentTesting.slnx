@@ -12,5 +12,6 @@
     <Project Path="tests/OrderService.ComponentTests/OrderService.ComponentTests.csproj" />
     <Project Path="tests/OrderService.ContractTests/OrderService.ContractTests.csproj" />
     <Project Path="tests/PaymentService.ComponentTests/PaymentService.ComponentTests.csproj" />
+    <Project Path="tests/PaymentService.ContractTests/PaymentService.ContractTests.csproj" />
   </Folder>
 </Solution>
