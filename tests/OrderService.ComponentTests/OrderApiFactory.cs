@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using MassTransit;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -44,6 +45,24 @@ public class OrderApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             SchemasToInclude = ["public"],
             TablesToIgnore = [new Respawn.Graph.Table("__EFMigrationsHistory")]
         });
+
+        await WarmUpAsync();
+        await ResetAsync();
+    }
+
+    // The first request through a freshly built host pays for JIT and assembly loading
+    // across routing, EF, the resilience pipeline, JSON and the bus. Measured at up to
+    // three seconds on a cold run, which is enough to trip a one second attempt timeout
+    // and turn whichever test happens to run first into a retry. Pay it once, here.
+    private async Task WarmUpAsync()
+    {
+        this.StubStock("SKU-WARMUP", availableQuantity: 1, unitPriceCents: 1);
+        this.StubPaymentAuthorised();
+
+        using var response = await CreateClient().PostAsJsonAsync(
+            "/orders", new PlaceOrderRequest("warmup", [new PlaceOrderItem("SKU-WARMUP", 1)]));
+
+        response.EnsureSuccessStatusCode();
     }
 
     public async ValueTask ResetAsync()

@@ -96,13 +96,16 @@ public class OutageTests(OrderApiFactory factory) : IAsyncLifetime
                 .WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json")
                 .WithBodyAsJson(new { sku, availableQuantity = 5, unitPriceCents = 899 })
-                .WithDelay(TimeSpan.FromSeconds(3)));
+                .WithDelay(StubDelay));
 
-        // The per-attempt timeout is one second, so a three second response never lands.
+        // The per-attempt timeout is one second, so the response never lands in time.
         await Should.ThrowAsync<TimeoutRejectedException>(() => PlaceOrder(sku, ct));
 
         PaymentCalls().ShouldBe(0);
     }
+
+    // Just past the one second attempt timeout, so abandoned responses finish quickly.
+    private static readonly TimeSpan StubDelay = TimeSpan.FromMilliseconds(1_500);
 
     [Fact]
     public async Task Does_not_retry_a_malformed_response()
