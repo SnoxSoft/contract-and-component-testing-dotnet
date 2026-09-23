@@ -7,7 +7,7 @@ namespace OrderService.ComponentTests;
 /// Canned collaborator responses. Every field name here is an assumption about
 /// what the real provider returns, and nothing in this project verifies it.
 /// </summary>
-internal static class StubExtensions
+public static class StubExtensions
 {
     public static void StubStock(
         this OrderApiFactory factory, string sku, int availableQuantity, int unitPriceCents) =>
