@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -30,7 +30,9 @@ public class InventoryProviderFactory : WebApplicationFactory<Program>, IAsyncLi
     {
         await _postgres.StartAsync();
 
-        UseKestrel();
+        // Port 0 asks the OS for a free port. The parameterless overload binds the default
+        // http://127.0.0.1:5000, which collides when several provider suites run in parallel.
+        UseKestrel(0);
         StartServer();
         ServerUri = CreateClient().BaseAddress!;
 

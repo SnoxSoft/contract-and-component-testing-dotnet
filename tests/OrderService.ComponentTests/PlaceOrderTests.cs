@@ -4,6 +4,8 @@ using Contracts;
 using MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Shouldly;
+using WireMock.RequestBuilders;
+using WireMock.ResponseBuilders;
 
 namespace OrderService.ComponentTests;
 
@@ -83,5 +85,49 @@ public class PlaceOrderTests(OrderApiFactory factory) : IAsyncLifetime
 
         // Stock is checked before payment, so the customer is never charged.
         factory.Payments.LogEntries.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task Tolerates_fields_the_providers_add_later()
+    {
+        var ct = TestContext.Current.CancellationToken;
+
+        // A provider adding a field is the most common change it will ever make, and it
+        // must never break a consumer. This pins the client as a tolerant reader.
+        factory.Inventory
+            .Given(Request.Create().WithPath("/stock/SKU-COFFEE").UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithBodyAsJson(new
+                {
+                    sku = "SKU-COFFEE",
+                    availableQuantity = 120,
+                    unitPriceCents = 899,
+                    warehouseCode = "WH-1",
+                    lastRestockedAt = "2026-09-01T08:00:00Z"
+                }));
+        factory.Payments
+            .Given(Request.Create().WithPath("/payments").UsingPost())
+            .RespondWith(Response.Create()
+                .WithStatusCode(201)
+                .WithHeader("Content-Type", "application/json")
+                .WithBodyAsJson(new
+                {
+                    paymentId = Guid.NewGuid(),
+                    orderId = Guid.NewGuid(),
+                    amountCents = 1_798,
+                    currency = "EUR",
+                    status = "Authorized",
+                    processor = "acme-pay",
+                    riskScore = 0.02
+                }));
+
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/orders", new PlaceOrderRequest("cust-1", [new PlaceOrderItem("SKU-COFFEE", 2)]), ct);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.Created);
     }
 }
