@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PaymentService\PaymentService.csproj" />
+    <ProjectReference Include="..\ContractTesting.Support\ContractTesting.Support.csproj" />
   </ItemGroup>
 
 </Project>

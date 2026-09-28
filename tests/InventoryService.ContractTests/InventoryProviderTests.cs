@@ -1,14 +1,12 @@
 using PactNet;
 using PactNet.Infrastructure.Outputters;
+using ContractTesting.Support;
 using PactNet.Verifier;
 
 namespace InventoryService.ContractTests;
 
 public class InventoryProviderTests(InventoryProviderFactory factory) : IClassFixture<InventoryProviderFactory>
 {
-    private static readonly string PactPath = Path.Combine(
-        AppContext.BaseDirectory, "..", "..", "..", "..", "..", "pacts", "OrderService-InventoryService.json");
-
     [Fact]
     public void Honours_the_contract_published_by_OrderService()
     {
@@ -20,7 +18,7 @@ public class InventoryProviderTests(InventoryProviderFactory factory) : IClassFi
 
         verifier
             .WithHttpEndpoint(factory.ServerUri)
-            .WithFileSource(new FileInfo(PactPath))
+            .FromBrokerOrFile("OrderService-InventoryService.json")
             .WithProviderStateUrl(factory.ProviderStateUri)
             .Verify();
     }
