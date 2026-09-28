@@ -22,6 +22,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Copied into the build output so the stubs read a stable snapshot: the contract
+         test projects rewrite these files and can run at the same time as this one. -->
+    <Content Include="..\..\pacts\*.json" Link="pacts\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\OrderService\OrderService.csproj" />
   </ItemGroup>
 
