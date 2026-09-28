@@ -23,19 +23,7 @@ public class PlaceOrderFailureTests(OrderApiFactory factory) : IAsyncLifetime
         var customerId = $"cust-{Guid.NewGuid():N}";
 
         factory.StubStock("SKU-COFFEE", availableQuantity: 500, unitPriceCents: 899);
-        factory.Payments
-            .Given(Request.Create().WithPath("/payments").UsingPost())
-            .RespondWith(Response.Create()
-                .WithStatusCode(422)
-                .WithHeader("Content-Type", "application/json")
-                .WithBodyAsJson(new
-                {
-                    paymentId = Guid.NewGuid(),
-                    orderId = Guid.NewGuid(),
-                    amountCents = 89_900,
-                    currency = "EUR",
-                    status = "Declined"
-                }));
+        factory.StubPaymentDeclined();
 
         var client = factory.CreateClient();
 
