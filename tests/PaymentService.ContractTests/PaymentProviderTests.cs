@@ -1,5 +1,6 @@
 using PactNet;
 using PactNet.Infrastructure.Outputters;
+using ContractTesting.Support;
 using PactNet.Verifier;
 
 namespace PaymentService.ContractTests;
@@ -20,7 +21,7 @@ public class PaymentProviderTests(PaymentProviderFactory factory) : IClassFixtur
 
         verifier
             .WithHttpEndpoint(factory.ServerUri)
-            .WithFileSource(new FileInfo(PactPath))
+            .FromBrokerOrFile("OrderService-PaymentService.json")
             .Verify();
     }
 

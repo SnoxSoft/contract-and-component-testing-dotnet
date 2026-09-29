@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OrderService.ComponentTests;
 using PactNet;
 using PactNet.Infrastructure.Outputters;
+using ContractTesting.Support;
 using PactNet.Verifier;
 using Shouldly;
 
@@ -42,7 +43,7 @@ public class OrderPlacedProviderTests(OrderApiFactory factory) : IClassFixture<O
             // interactions, so the address is never used.
             .WithHttpEndpoint(new Uri("http://localhost:59999"))
             .WithMessages(scenarios => scenarios.Add("an order placed event", () => published), WireFormat)
-            .WithFileSource(new FileInfo(PactPath))
+            .FromBrokerOrFile("NotificationService-OrderService.json")
             .Verify();
     }
 
