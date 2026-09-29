@@ -50,7 +50,7 @@ Component tests validate behaviour. Contract tests validate the stubs those beha
 Start the infrastructure (PostgreSQL + RabbitMQ):
 
 ```bash
-docker compose up -d
+docker compose up -d   # now also starts a Pact Broker on http://localhost:9292 (pact/pact)
 ```
 
 Then run the services, each in its own terminal:

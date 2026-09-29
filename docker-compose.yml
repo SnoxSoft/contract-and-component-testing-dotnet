@@ -26,5 +26,31 @@ services:
       timeout: 5s
       retries: 10
 
+
+  pact-broker:
+    image: pactfoundation/pact-broker:3.0.0-pactbroker2.121.2
+    ports:
+      - "9292:9292"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PACT_BROKER_DATABASE_ADAPTER: postgres
+      PACT_BROKER_DATABASE_HOST: postgres
+      PACT_BROKER_DATABASE_NAME: pactbroker
+      PACT_BROKER_DATABASE_USERNAME: postgres
+      PACT_BROKER_DATABASE_PASSWORD: postgres
+      PACT_BROKER_BASIC_AUTH_USERNAME: pact
+      PACT_BROKER_BASIC_AUTH_PASSWORD: pact
+      PACT_BROKER_PORT: 9292
+      PACT_BROKER_LOG_LEVEL: WARN
+      # Lets the healthcheck reach the heartbeat without credentials.
+      PACT_BROKER_PUBLIC_HEARTBEAT: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9292/diagnostic/status/heartbeat || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
 volumes:
   postgres-data:
