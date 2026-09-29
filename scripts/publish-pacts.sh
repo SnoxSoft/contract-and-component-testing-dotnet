@@ -7,6 +7,12 @@
 set -euo pipefail
 
 BROKER_URL="${PACT_BROKER_BASE_URL:-http://host.docker.internal:9292}"
+
+# The CLI runs inside a container, where localhost is the container itself. Callers
+# who set PACT_BROKER_BASE_URL for the verifier, which runs on the host, would
+# otherwise silently fail to reach the broker from here.
+BROKER_URL="${BROKER_URL/localhost/host.docker.internal}"
+BROKER_URL="${BROKER_URL/127.0.0.1/host.docker.internal}"
 BROKER_USER="${PACT_BROKER_USERNAME:-pact}"
 BROKER_PASS="${PACT_BROKER_PASSWORD:-pact}"
 VERSION="${GIT_COMMIT:-$(git rev-parse --short HEAD)}"
