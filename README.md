@@ -1,5 +1,7 @@
 # Contract & Component Testing in .NET
 
+[![CI](https://github.com/SnoxSoft/contract-and-component-testing-dotnet/actions/workflows/ci.yml/badge.svg)](https://github.com/SnoxSoft/contract-and-component-testing-dotnet/actions/workflows/ci.yml)
+
 A worked example of **component testing** and **consumer-driven contract testing** on a four-service .NET system — and, more importantly, of what each layer can and cannot catch.
 
 The premise in one paragraph:
